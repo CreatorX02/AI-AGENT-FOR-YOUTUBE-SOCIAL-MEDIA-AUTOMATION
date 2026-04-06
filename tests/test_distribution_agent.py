@@ -109,6 +109,32 @@ class TestRun:
         agent._youtube.upload_video.assert_not_called()
         assert packages[0].status != ContentStatus.PUBLISHED
 
+    def test_run_with_file_path_publishes_to_youtube(self, agent, mock_llm, sample_package):
+        mock_llm.complete_json.return_value = {"caption": "Caption"}
+        agent._youtube.upload_video.return_value = "yt_vid_001"
+        original_title = sample_package.idea.original_title
+        # Simulate SEO agent mutating the title before distribution runs
+        sample_package.idea.title = "SEO Optimised Title"
+        packages = agent.run([sample_package], video_file_paths={original_title: "/tmp/video.mp4"})
+        agent._youtube.upload_video.assert_called_once()
+        assert packages[0].youtube_video_id == "yt_vid_001"
+        assert packages[0].status == ContentStatus.PUBLISHED
+
+    def test_run_with_video_url_publishes_to_social_platforms(
+        self, agent, mock_llm, sample_package
+    ):
+        mock_llm.complete_json.return_value = {"caption": "Caption"}
+        agent._tiktok.upload_video.return_value = {}
+        agent._instagram.upload_reel.return_value = {}
+        agent._facebook.upload_video.return_value = {}
+        agent._twitter.post_tweet.return_value = {}
+        original_title = sample_package.idea.original_title
+        agent.run([sample_package], video_urls={original_title: "https://cdn.example.com/video.mp4"})
+        agent._tiktok.upload_video.assert_called_once()
+        agent._instagram.upload_reel.assert_called_once()
+        agent._facebook.upload_video.assert_called_once()
+        agent._twitter.post_tweet.assert_called_once()
+
     def test_run_handles_variant_generation_error(self, agent, mock_llm, sample_package):
         mock_llm.complete_json.side_effect = Exception("LLM error")
         packages = agent.run([sample_package])

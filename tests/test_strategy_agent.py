@@ -84,11 +84,21 @@ class TestBuildWeeklyCalendar:
 
 
 class TestBuildMonthlyCalendar:
-    def test_returns_entries_for_month(self, agent, sample_ideas):
+    def test_returns_entries_for_full_month(self, agent, sample_ideas):
         cal = agent.build_monthly_calendar(sample_ideas, year=2025, month=2)
-        # February 2025 has 28 days, but weekly calendar only returns 7
-        assert len(cal) <= 28
-        assert len(cal) > 0
+        # February 2025 has 28 days — the fixed implementation generates all of them
+        assert len(cal) == 28
+
+    def test_first_and_last_date_match_month(self, agent, sample_ideas):
+        cal = agent.build_monthly_calendar(sample_ideas, year=2025, month=3)
+        assert cal[0]["date"] == "2025-03-01"
+        assert cal[-1]["date"] == "2025-03-31"
+
+    def test_cycles_ideas_across_days(self, agent, sample_ideas):
+        cal = agent.build_monthly_calendar(sample_ideas, year=2025, month=1)
+        # 31 days with 3 ideas → ideas repeat via modulo
+        assert len(cal) == 31
+        assert cal[0]["idea_title"] == cal[3]["idea_title"]
 
 
 class TestRecommendOptimalPostTimes:

@@ -107,7 +107,29 @@ class StrategyAgent:
         target_month = month or today.month
         _, days_in_month = calendar.monthrange(target_year, target_month)
         start = date(target_year, target_month, 1)
-        return self.build_weekly_calendar(ideas, start_date=start)[:days_in_month]
+        platforms_cycle = [
+            Platform.YOUTUBE,
+            Platform.YOUTUBE_SHORTS,
+            Platform.TIKTOK,
+            Platform.INSTAGRAM_REELS,
+            Platform.YOUTUBE,
+            Platform.YOUTUBE_SHORTS,
+            Platform.FACEBOOK,
+        ]
+        calendar_entries: List[Dict[str, Any]] = []
+        for i in range(days_in_month):
+            publish_date = start + timedelta(days=i)
+            idea = ideas[i % len(ideas)] if ideas else None
+            platform = platforms_cycle[i % len(platforms_cycle)]
+            calendar_entries.append(
+                {
+                    "date": publish_date.isoformat(),
+                    "platform": platform.value,
+                    "idea_title": idea.title if idea else "",
+                    "niche": idea.niche if idea else "",
+                }
+            )
+        return calendar_entries
 
     def recommend_optimal_post_times(self, platform: Platform) -> List[str]:
         """Return LLM-suggested optimal posting times for *platform*."""

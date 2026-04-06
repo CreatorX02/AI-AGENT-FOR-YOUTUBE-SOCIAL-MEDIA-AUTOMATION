@@ -53,6 +53,16 @@ class TestContentIdea:
         assert idea.estimated_rpm == 0.0
         assert idea.priority_score == 0.0
 
+    def test_original_title_set_automatically(self):
+        idea = ContentIdea(title="Original Title", niche="tech")
+        assert idea.original_title == "Original Title"
+
+    def test_original_title_stays_after_title_mutation(self):
+        idea = ContentIdea(title="Original Title", niche="tech")
+        idea.title = "SEO Optimised Title"
+        assert idea.original_title == "Original Title"
+        assert idea.title == "SEO Optimised Title"
+
     def test_with_values(self):
         idea = ContentIdea(
             title="How to Save $10k",
@@ -147,6 +157,13 @@ class TestContentPackage:
         assert pkg.status == ContentStatus.IDEA
         assert pkg.script is None
         assert pkg.platform_variants == []
+        assert pkg.youtube_video_id == ""
+
+    def test_youtube_video_id_can_be_set(self):
+        idea = ContentIdea(title="Test", niche="tech")
+        pkg = ContentPackage(idea=idea)
+        pkg.youtube_video_id = "abc123"
+        assert pkg.youtube_video_id == "abc123"
 
 
 class TestVideoMetrics:

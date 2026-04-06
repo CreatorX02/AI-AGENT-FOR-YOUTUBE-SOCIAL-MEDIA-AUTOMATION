@@ -173,27 +173,68 @@ class DistributionAgent:
     # ------------------------------------------------------------------
 
     def run(
-        self, packages: List[ContentPackage], video_file_paths: Optional[Dict[str, str]] = None
+        self,
+        packages: List[ContentPackage],
+        video_file_paths: Optional[Dict[str, str]] = None,
+        video_urls: Optional[Dict[str, str]] = None,
     ) -> List[ContentPackage]:
-        """Build platform variants for all packages.
+        """Build platform variants for all packages and publish where paths/URLs are provided.
 
-        Actual uploads require *video_file_paths* mapping idea title → local path.
-        When paths are provided the agent attempts to publish to each platform.
+        Parameters
+        ----------
+        video_file_paths:
+            Mapping of ``{original_title: local_file_path}`` for YouTube uploads.
+        video_urls:
+            Mapping of ``{original_title: hosted_url}`` for TikTok, Instagram,
+            and Facebook uploads (these platforms require a publicly accessible URL).
+
+        Keys should use the **original** idea title (before SEO optimization).
         """
         video_file_paths = video_file_paths or {}
+        video_urls = video_urls or {}
         for pkg in packages:
             try:
                 pkg.platform_variants = self.build_platform_variants(pkg)
             except Exception as exc:
                 logger.error("Variant generation failed for '%s': %s", pkg.idea.title, exc)
 
-            file_path = video_file_paths.get(pkg.idea.title)
+            # Use the immutable original_title as a stable lookup key so that
+            # SEO mutations to pkg.idea.title don't break the file-path mapping.
+            lookup_key = pkg.idea.original_title
+
+            file_path = video_file_paths.get(lookup_key)
             if file_path:
                 try:
-                    self.publish_to_youtube(pkg, file_path)
+                    video_id = self.publish_to_youtube(pkg, file_path)
+                    pkg.youtube_video_id = video_id
                     pkg.status = ContentStatus.PUBLISHED
                 except Exception as exc:
                     logger.error("YouTube publish failed for '%s': %s", pkg.idea.title, exc)
+
+            video_url = video_urls.get(lookup_key)
+            if video_url:
+                # URL-based platforms (TikTok, Instagram, Facebook) share the same
+                # (package, url) signature and are iterated uniformly.
+                for publish_fn, label in (
+                    (self.publish_to_tiktok, "TikTok"),
+                    (self.publish_to_instagram, "Instagram"),
+                    (self.publish_to_facebook, "Facebook"),
+                ):
+                    try:
+                        publish_fn(pkg, video_url)
+                    except Exception as exc:
+                        logger.error(
+                            "%s publish failed for '%s': %s", label, pkg.idea.title, exc
+                        )
+                # Twitter posts a promotional text tweet — no video URL is uploaded
+                # directly, so it is handled separately with a different method signature.
+                try:
+                    self.publish_to_twitter(pkg)
+                except Exception as exc:
+                    logger.error("Twitter publish failed for '%s': %s", pkg.idea.title, exc)
+
+                if pkg.status != ContentStatus.PUBLISHED:
+                    pkg.status = ContentStatus.PUBLISHED
 
         logger.info("Distribution cycle complete for %d packages.", len(packages))
         return packages

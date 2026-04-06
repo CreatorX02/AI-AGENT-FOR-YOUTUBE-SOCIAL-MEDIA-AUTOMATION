@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from ai_agent.config import Config
 
@@ -56,10 +56,11 @@ class LLMClient:
         user_prompt: str,
         temperature: float = 0.5,
         max_tokens: int = 2048,
-    ) -> Dict[str, Any]:
-        """Return a parsed JSON dict from the LLM response.
+    ) -> Any:
+        """Return parsed JSON content from the LLM response.
 
         The system prompt should instruct the model to respond with valid JSON.
+        The parsed result may be a dict, list, or any other valid JSON value.
         """
         raw = self.complete(
             system_prompt=system_prompt + "\n\nRespond ONLY with valid JSON.",

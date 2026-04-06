@@ -48,6 +48,12 @@ class ContentIdea:
     trend_signals: List[TrendSignal] = field(default_factory=list)
     estimated_rpm: float = 0.0
     priority_score: float = 0.0
+    # Immutable copy of the original title set at creation time.
+    # Used as a stable lookup key even after SEO mutates `title`.
+    original_title: str = field(init=False)
+
+    def __post_init__(self) -> None:
+        self.original_title = self.title
 
 
 @dataclass
@@ -134,3 +140,5 @@ class ContentPackage:
     platform_variants: List[PlatformVariant] = field(default_factory=list)
     monetization: Optional[MonetizationPlan] = None
     status: ContentStatus = ContentStatus.IDEA
+    # YouTube video ID assigned after a successful upload.
+    youtube_video_id: str = ""

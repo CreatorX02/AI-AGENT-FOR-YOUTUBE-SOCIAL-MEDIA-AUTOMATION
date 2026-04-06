@@ -58,16 +58,19 @@ class ContentGrowthOrchestrator:
     def run_cycle(
         self,
         video_file_paths: Optional[Dict[str, str]] = None,
+        video_urls: Optional[Dict[str, str]] = None,
     ) -> List[ContentPackage]:
         """Execute one full Research → Create → Distribute → Track cycle.
 
         Parameters
         ----------
         video_file_paths:
-            Optional mapping of ``{idea_title: local_file_path}`` for videos
-            that are ready to be uploaded.  When absent the pipeline runs up to
-            (and including) the distribution *variant-building* step but skips
-            actual uploads.
+            Optional mapping of ``{original_title: local_file_path}`` for YouTube
+            uploads.  When absent, the pipeline runs up to (and including) the
+            distribution *variant-building* step but skips actual uploads.
+        video_urls:
+            Optional mapping of ``{original_title: hosted_url}`` for TikTok,
+            Instagram, and Facebook uploads.
         """
         logger.info("=" * 60)
         logger.info("Starting content growth cycle.")
@@ -95,9 +98,14 @@ class ContentGrowthOrchestrator:
 
         # 6. Distribution
         logger.info("[6/7] Automated distribution …")
-        packages = self._distribution.run(packages, video_file_paths)
+        packages = self._distribution.run(packages, video_file_paths, video_urls)
 
-        # 7. Tracking (uses previously published IDs)
+        # Collect newly published YouTube video IDs for the tracking step.
+        for pkg in packages:
+            if pkg.youtube_video_id and pkg.youtube_video_id not in self._published_video_ids:
+                self._published_video_ids.append(pkg.youtube_video_id)
+
+        # 7. Tracking (uses all previously published IDs)
         logger.info("[7/7] Performance tracking …")
         self._last_report = self._tracking.run(self._published_video_ids)
 
