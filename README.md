@@ -117,7 +117,7 @@ Each cycle:
 3. **Creation** — Generates hook→body→CTA scripts, scene-by-scene visual directions, and thumbnail concepts.
 4. **SEO** — Produces CTR-optimised titles, keyword-rich descriptions, tags, and hashtags.
 5. **Monetisation** — Identifies high-RPM keywords, affiliate programs, and sponsorship categories.
-6. **Distribution** — Builds platform-specific variants (aspect ratio, captions, hashtags). Uploads when video files are provided.
+6. **Distribution** — Builds platform-specific variants (aspect ratio, captions, hashtags). Uploads to YouTube when local file paths are provided; publishes to TikTok, Instagram, Facebook, and X when hosted video URLs are provided.
 7. **Tracking** — Retrieves channel analytics; extracts top-performing patterns; generates strategic recommendations for the next cycle.
 
 ---
@@ -126,13 +126,14 @@ Each cycle:
 
 Every content idea is wrapped in a `ContentPackage` containing:
 
-- `idea` — title, niche, hook, estimated RPM, priority score
+- `idea` — original title, niche, hook, estimated RPM, priority score
 - `script` — hook, body, CTA, estimated duration
 - `visual_direction` — timestamped scenes with B-roll suggestions
 - `thumbnail` — headline text, background, emotion, colour scheme
 - `seo` — title, description, tags, hashtags
 - `platform_variants` — per-platform captions and aspect ratios
 - `monetization` — ad keywords, affiliates, digital products, sponsorships
+- `youtube_video_id` — set after a successful YouTube upload
 
 ---
 
@@ -142,7 +143,7 @@ Every content idea is wrapped in a `ContentPackage` containing:
 python -m pytest tests/ -v
 ```
 
-All 93 tests run without real API calls (all external services are mocked).
+All 100 tests run without real API calls (all external services are mocked).
 
 ---
 
